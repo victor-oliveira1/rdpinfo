@@ -8,7 +8,7 @@ This script can get the hostname and domain (CN) from RDP server using xfreerdp 
 - bash
 - xfreerdp
 
-## Instalation:
+## Installation:
 Just copy to a directory and add to the PATH environment variable.
 Example:
 >$ mkdir ~/.local/bin  
