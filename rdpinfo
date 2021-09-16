@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# Retrieve the common name from RDP server
+# Victor Oliveira <victor.oliveira@gmx.com>
+
+
+TMPFILE="/tmp/rdpinfo.${RANDOM}"
+THREADS=50
+N=1
+VERSION="1.0.0"
+
+
+getCN() {
+    local _HOST="${1}"
+    local _N="${2}"
+    CN=$(xfreerdp "${_HOST}" 2>&1 < /dev/null | grep -m 1 CN | sed 's/.*CN = //')
+    # echo "${_HOST}"$'\t'"${CN}"
+    echo "${_N}"$'\t'"${_HOST}"$'\t'"${CN}" >> "${TMPFILE}"
+
+}
+
+getJobs() {
+    jobs -p|wc -l
+}
+
+endScript() {
+    echo "Exiting..." 1>&2
+    rm -rf "${TMPFILE}"
+    exit 1
+}
+
+usage() {
+    echo "${0##*/} v${VERSION}"
+    echo "Usage:" 1>&2
+    echo "  ${0##*/} [-t threads] target" 1>&2
+    echo 1>&2
+    echo "Options:" 1>&2
+    echo "  -t"$'\t'$'\t'"Number of simultaneous worker threads" 1>&2
+    echo 1>&2
+    echo "Arguments:" 1>&2
+    echo "  target"$'\t'"IP address or DNS name (+1 separated by space)" 1>&2
+    exit 1
+}
+
+
+trap endScript SIGINT
+
+while getopts "t:h" options; do
+    case "${options}" in
+        t)
+            THREADS="${OPTARG}"
+            ;;
+        h)
+            usage
+            ;;
+        *)
+            usage
+    esac
+done
+
+shift $((OPTIND -1))
+if [ -z "${@}" ]; then
+    usage
+fi
+
+STIME=$(date +%s)
+
+echo "** Starting ${0##*/} with ${THREADS} threads **" 1>&2
+
+for HOST in "${@}"; do
+    getCN "${HOST}" "${N}" &
+    N=$(("${N}" + 1))
+    while :; do
+        if [ $(getJobs) -lt ${THREADS} ]; then
+            break
+        else
+            sleep 5
+        fi
+    done
+done
+
+wait
+
+sort -n "${TMPFILE}" | cut -f2-
+echo "** ${N} host(s) scanned in $(($(date +%s) - ${STIME})) second(s) **" 1>&2
+rm -rf "${TMPFILE}"
