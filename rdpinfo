@@ -29,13 +29,11 @@ endScript() {
 }
 
 usage() {
-    echo "${0##*/} v${VERSION}"
+    echo "${0##*/} v${VERSION} (https://github.com/victor-oliveira1/rdpinfo)" 1>&2
     echo "Usage:" 1>&2
     echo "  ${0##*/} [-t threads] target" 1>&2
-    echo 1>&2
     echo "Options:" 1>&2
     echo "  -t"$'\t'$'\t'"Number of simultaneous worker threads" 1>&2
-    echo 1>&2
     echo "Arguments:" 1>&2
     echo "  target"$'\t'"IP address or DNS name (+1 separated by space)" 1>&2
     exit 1
