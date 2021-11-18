@@ -1,12 +1,18 @@
 #!/usr/bin/env bash
 # Retrieve the common name from RDP server
+# Changelog:
+# v1.0.1 - 18/11/2021 11:51 <victor.oliveira@gmx.com>
+# - Fixed wrong reporting number of hosts scanned
+# - Fixed multi host scan problem
+# v1.0.0 - 15/08/2021 14:40 <victor.oliveira@gmx.com>
+# - First release
 # Victor Oliveira <victor.oliveira@gmx.com>
 
 
 TMPFILE="/tmp/rdpinfo.${RANDOM}"
 THREADS=50
-N=1
-VERSION="1.0.0"
+N=0
+VERSION="1.0.1"
 
 
 getCN() {
@@ -29,11 +35,13 @@ endScript() {
 }
 
 usage() {
-    echo "${0##*/} v${VERSION} (https://github.com/victor-oliveira1/rdpinfo)" 1>&2
+    echo "${0##*/} v${VERSION}"
     echo "Usage:" 1>&2
     echo "  ${0##*/} [-t threads] target" 1>&2
+    echo 1>&2
     echo "Options:" 1>&2
     echo "  -t"$'\t'$'\t'"Number of simultaneous worker threads" 1>&2
+    echo 1>&2
     echo "Arguments:" 1>&2
     echo "  target"$'\t'"IP address or DNS name (+1 separated by space)" 1>&2
     exit 1
@@ -56,7 +64,7 @@ while getopts "t:h" options; do
 done
 
 shift $((OPTIND -1))
-if [ -z "${@}" ]; then
+if [[ -z "${@}" ]]; then
     usage
 fi
 
@@ -68,7 +76,7 @@ for HOST in "${@}"; do
     getCN "${HOST}" "${N}" &
     N=$(("${N}" + 1))
     while :; do
-        if [ $(getJobs) -lt ${THREADS} ]; then
+        if [ $(getJobs) -lt $((${THREADS}+1)) ]; then
             break
         else
             sleep 5
